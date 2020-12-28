@@ -1,0 +1,24 @@
+version: '3.7'
+
+services:
+  app-service-dev:
+    container_name: covid-app-dev
+    image: node:12.2.0-alpine
+    working_dir: /covid-app
+    command: sh -c "npm install && npm install @vue/cli -g && npm run serve"
+    volumes:
+      # This if you want to include node_modules
+      # - .:/covid-app
+      # Or this if not
+      - ./public:/covid-app/public
+      - ./src:/covid-app/src
+      - ./.env.development:/covid-app/.env.development
+      - ./package.json:/covid-app/package.json
+    ports:
+      - "8081:8080"
+    networks:
+      - covid-network
+networks:
+  covid-network:
+    external:
+      name: covid-network

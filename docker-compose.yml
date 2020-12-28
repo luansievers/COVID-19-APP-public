@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  app-service:
+    image: luansievers/covid-app
+    container_name: covid-app
+    build: .
+    volumes:
+      - dist:/frontend/dist
+    networks:
+      - covid-network
+  nginx:
+    image: nginx:1.16.0-alpine
+    container_name: nginx
+    volumes:
+      - dist:/usr/share/nginx/html
+      - ./data/nginx:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - app-service
+    networks:
+      - covid-network
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    networks:
+      - covid-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+volumes:
+  dist:
+
+networks:
+  covid-network:
+    external:
+      name: covid-network
